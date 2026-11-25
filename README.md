@@ -20,6 +20,70 @@ else Q <= {Q[2:0], sin};   // shift left, sin enters at LSB
 Serial output: sout = Q[3]   (the bit about to be shifted out)
 
 ## Design / RTL Program
+module mux2to1 (
+    input  wire A,      // input line 0
+    input  wire B,      // input line 1
+    input  wire S,      // select line
+    output wire Y       // output
+);
+    assign Y = (~S & A) | (S & B);
+endmodule
+ 
+module demux1to2 (
+    input  wire D,      // data input
+    input  wire S,      // select line
+    output wire Y0,     // output line 0
+    output wire Y1      // output line 1
+);
+    assign Y0 = (~S) & D;
+    assign Y1 = S & D;
+endmodule
+Testbench Program
+// gedit tb4.v
+module tb4;
+    reg  A, B, S, D;
+    wire Y;
+    wire Y0, Y1;
+ 
+   // Instantiate the 2:1 Multiplexer
+    mux2to1 mux_uut (
+        .A(A),
+        .B(B),
+        .S(S),
+        .Y(Y)
+    );
+ 
+  // Instantiate the 1:2 Demultiplexer
+    demux1to2 demux_uut (
+        .D(D),
+        .S(S),
+        .Y0(Y0),
+        .Y1(Y1)
+    );
+ 
+  initial begin
+        // ---- VCD dump setup ----
+        $dumpfile("mux_demux.vcd");   // name of the VCD file to be generated
+        $dumpvars(0, tb4);             // dump all signals in this testbench hierarchy
+ 
+  // ---- Apply all input combinations ----
+        $monitor("Time=%0t S=%b A=%b B=%b Y=%b | D=%b Y0=%b Y1=%b",
+                  $time, S, A, B, Y, D, Y0, Y1);
+ 
+   // MUX select = 0 -> Y should follow A
+        S = 0; A = 0; B = 0; D = 0; #10;
+        S = 0; A = 0; B = 1; D = 1; #10;
+        S = 0; A = 1; B = 0; D = 1; #10;
+        S = 0; A = 1; B = 1; D = 0; #10;
+ 
+  // MUX select = 1 -> Y should follow B
+        S = 1; A = 0; B = 0; D = 0; #10;
+        S = 1; A = 0; B = 1; D = 1; #10;
+        S = 1; A = 1; B = 0; D = 1; #10;
+        S = 1; A = 1; B = 1; D = 0; #10;
+      #10 $finish;
+    end
+endmodule
 
 Testbench Program
 
@@ -83,27 +147,8 @@ The design was compiled and simulated using Synopsys VCS, and the functionality 
 
 ## Output
 
+<img width="1600" height="880" alt="EXPERIMENT 6" src="https://github.com/user-attachments/assets/4115e633-b6c2-479e-927e-cd72e12c0cba" />
 
-
-## Viva-Voce Questions
-
-●	What is a shift register, and what are its four basic types (SISO, SIPO, PISO, PIPO)?
-
-●	How does a SIPO shift register differ from a PISO shift register?
-
-●	How many clock pulses are required to fully load a 4-bit SIPO shift register with serial data?
-
-●	How would you modify the design to shift right instead of left?
-
-●	How would you convert this SIPO register into a Serial-In Serial-Out (SISO) register?
-
-●	What is the purpose of the asynchronous reset in this design?
-
-●	Why is a VCD file generated, and what does $dumpvars(0, tb) do?
-
-●	How can a shift register be used to implement a ring counter or Johnson counter?
-
-●	What is the difference between a shift register built from D flip-flops versus one described behaviourally in Verilog, in terms of simulation versus synthesis?
 
 ## Result
 
